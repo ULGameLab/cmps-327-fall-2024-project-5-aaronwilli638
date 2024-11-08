@@ -55,14 +55,63 @@ public class PathFinder
             }
 
             // for each neighboring tile calculate the costs
-            // You just need to fill code inside this foreach only
             foreach (Tile nextTile in current.tile.Adjacents)
             {
-                
+                // If the neighboring tile is already processed, continue
+                if (DoneList.Exists(node => node.tile == nextTile))
+                {
+                    continue;
+                }
+
+                double newCost = current.costSoFar + GetDistance(current.tile, nextTile);
+                Node nextNode = TODOList.Find(node => node.tile == nextTile);
+
+                if (nextNode == null)
+                {
+                    // If the neighbor is not in the TODO list, add it with the calculated cost
+                    double priority = newCost + GetDistance(nextTile, goal);
+                    TODOList.Add(new Node(nextTile, priority, current, newCost));
+                }
+                else if (newCost < nextNode.costSoFar)
+                {
+                    // If the new path to neighbor is shorter, update the costs and path
+                    nextNode.cameFrom = current;
+                    nextNode.costSoFar = newCost;
+                    nextNode.priority = newCost + GetDistance(nextTile, goal);
+                }
             }
         }
         return new Queue<Tile>(); // Returns an empty Path if no path is found
     }
+
+    // Helper method to calculate the distance between two tiles (using Manhattan Distance or Euclidean Distance)
+    private double GetDistance(Tile a, Tile b)
+    {
+        // Assuming there is a way to get the position from the Tile, like a Vector3 or similar
+        Vector3 posA = a.transform.position; // Update this line if Tile has a different property to access its position
+        Vector3 posB = b.transform.position; // Update accordingly
+
+        // Calculate the Manhattan distance or Euclidean distance
+        return Math.Abs(posA.x - posB.x) + Math.Abs(posA.z - posB.z); // Using x and z for 2D distance
+    }
+
+
+
+
+    // Helper method to retrace the path from goal to start
+    private Queue<Tile> RetracePath(Node node)
+    {
+        List<Tile> tileList = new List<Tile>();
+        Node nodeIterator = node;
+        while (nodeIterator.cameFrom != null)
+        {
+            tileList.Insert(0, nodeIterator.tile);
+            nodeIterator = nodeIterator.cameFrom;
+        }
+        return new Queue<Tile>(tileList);
+    }
+
+
 
     // TODO: Find the path based on A-Star Algorithm
     // In this case avoid a path passing near an enemy tile
@@ -87,12 +136,30 @@ public class PathFinder
                 return RetracePath(current);  // Returns the Path if goal is reached
             }
 
-            // for each neighboring tile calculate the costs
-            // You just need to fill code inside this foreach only
-            // Just increase the F cost of the enemy tile and the tiles around it by a certain ammount (say 30)
             foreach (Tile nextTile in current.tile.Adjacents)
             {
+                // If the neighboring tile is already processed, continue
+                if (DoneList.Exists(node => node.tile == nextTile))
+                {
+                    continue;
+                }
 
+                double newCost = current.costSoFar + GetDistance(current.tile, nextTile);
+                Node nextNode = TODOList.Find(node => node.tile == nextTile);
+
+                if (nextNode == null)
+                {
+                    // If the neighbor is not in the TODO list, add it with the calculated cost
+                    double priority = newCost + GetDistance(nextTile, goal);
+                    TODOList.Add(new Node(nextTile, priority, current, newCost));
+                }
+                else if (newCost < nextNode.costSoFar)
+                {
+                    // If the new path to neighbor is shorter, update the costs and path
+                    nextNode.cameFrom = current;
+                    nextNode.costSoFar = newCost;
+                    nextNode.priority = newCost + GetDistance(nextTile, goal);
+                }
             }
         }
         return new Queue<Tile>(); // Returns an empty Path
@@ -109,17 +176,8 @@ public class PathFinder
     }
 
     // Retrace path from a given Node back to the start Node
-    Queue<Tile> RetracePath(Node node)
-    {
-        List<Tile> tileList = new List<Tile>();
-        Node nodeIterator = node;
-        while (nodeIterator.cameFrom != null)
-        {
-            tileList.Insert(0, nodeIterator.tile);
-            nodeIterator = nodeIterator.cameFrom;
-        }
-        return new Queue<Tile>(tileList);
-    }
+   
+
 
     // Generate a Random Path. Used for enemies
     public Queue<Tile> RandomPath(Tile start, int stepNumber)
